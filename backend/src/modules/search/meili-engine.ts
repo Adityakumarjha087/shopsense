@@ -53,6 +53,8 @@ export class MeiliSearchEngine implements SearchEngine {
     const res = await this.index.search(q, {
       filter: toMeiliFilter(filters),
       limit,
+      // Drop the most frequent (least informative) words first when not all words match.
+      matchingStrategy: "frequency",
       attributesToRetrieve: ["id"],
       facets: ["category", "brand", "colors"],
     });

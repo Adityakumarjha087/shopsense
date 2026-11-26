@@ -3,7 +3,7 @@ import helmet from "helmet";
 import cors from "cors";
 import compression from "compression";
 import { pinoHttp } from "pino-http";
-import { rateLimit } from "express-rate-limit";
+import { ipKeyGenerator, rateLimit } from "express-rate-limit";
 import swaggerUi from "swagger-ui-express";
 import type { AppContext } from "./context.js";
 import { env } from "./config/env.js";
@@ -79,7 +79,7 @@ export function createApp(ctx: AppContext): Express {
       legacyHeaders: false,
       skip: () => env.NODE_ENV === "test",
       // Authenticated users and the Next.js server (internal key) are keyed separately from anonymous IPs.
-      keyGenerator: (req) => req.user?.id ?? (req.headers["x-internal-key"] === env.INTERNAL_API_KEY ? "internal" : (req.ip ?? "unknown")),
+      keyGenerator: (req) => req.user?.id ?? (req.headers["x-internal-key"] === env.INTERNAL_API_KEY ? "internal" : ipKeyGenerator(req.ip ?? "0.0.0.0")),
       message: { error: { code: "RATE_LIMITED", message: "Too many requests" } },
     }),
   );

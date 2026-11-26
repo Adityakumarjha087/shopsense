@@ -112,7 +112,9 @@ export interface ToolContext {
   userId?: string;
 }
 
-const eqi = (a: string | null | undefined, b: string | undefined) => !!a && !!b && a.toLowerCase() === b.toLowerCase();
+const norm = (s: string) => s.toLowerCase().replace(/^uk\s*/, "").replace(/\s+/g, "");
+/** Case/format-insensitive option match ("uk 9" == "UK 9" == "9"). */
+const eqi = (a: string | null | undefined, b: string | undefined) => !!a && !!b && norm(a) === norm(b);
 
 export class AssistantTools {
   private readonly catalog: CatalogService;

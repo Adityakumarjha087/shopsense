@@ -36,6 +36,31 @@ function sortCards(cards: ProductCard[], sort: SearchQueryInput["sort"]): Produc
   return out;
 }
 
+/**
+ * Greedy diversity re-rank for relevance ordering: each additional result from an already
+ * represented category is discounted, so broad queries ("cozy winter outfit") mix categories.
+ */
+export function diversify(cards: ProductCard[], scoreById: Map<string, number>, decay = 0.85): ProductCard[] {
+  const pool = [...cards];
+  const counts = new Map<string, number>();
+  const out: ProductCard[] = [];
+  while (pool.length) {
+    let bestIdx = 0;
+    let bestScore = -Infinity;
+    pool.forEach((c, i) => {
+      const s = (scoreById.get(c.id) ?? 0) * Math.pow(decay, counts.get(c.category.slug) ?? 0);
+      if (s > bestScore) {
+        bestScore = s;
+        bestIdx = i;
+      }
+    });
+    const [picked] = pool.splice(bestIdx, 1);
+    out.push(picked!);
+    counts.set(picked!.category.slug, (counts.get(picked!.category.slug) ?? 0) + 1);
+  }
+  return out;
+}
+
 export function createSearchService(ctx: AppContext) {
   const hybrid = new HybridSearchService(ctx.search, ctx.ml);
   const catalog = new CatalogService(ctx.prisma, ctx.cache);
@@ -55,6 +80,8 @@ export function createSearchService(ctx: AppContext) {
         const created = await ctx.prisma.product.findMany({ where: { id: { in: result.ids } }, select: { id: true, createdAt: true } });
         const at = new Map(created.map((c) => [c.id, c.createdAt.getTime()]));
         cards = [...cards].sort((a, b) => (at.get(b.id) ?? 0) - (at.get(a.id) ?? 0));
+      } else if (query.sort === "relevance") {
+        cards = diversify(cards, new Map(result.hits.map((h) => [h.id, h.score])));
       } else {
         cards = sortCards(cards, query.sort);
       }

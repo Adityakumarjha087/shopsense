@@ -41,9 +41,10 @@ export function parseShown(system: string): ShownProduct[] {
 
 export function parseOptions(text: string): { size?: string; color?: string; quantity?: number } {
   const t = ` ${text.toLowerCase()} `;
-  const sizeWord = t.match(/\bsize\s+(\w+)/)?.[1];
+  const uk = t.match(/\b(?:uk|size)\s*(\d{1,2})\b/)?.[1];
+  const sizeWord = t.match(/\bsize\s+([a-z]{1,3})\b/)?.[1];
   const sizeLetter = SIZES.find((s) => new RegExp(`\\b(in )?${s}\\b`).test(t) && /\b(size|in)\b/.test(t));
-  const size = sizeWord ? sizeWord.toUpperCase() : sizeLetter?.toUpperCase();
+  const size = uk ? `UK ${uk}` : sizeWord && SIZES.includes(sizeWord) ? sizeWord.toUpperCase() : sizeLetter?.toUpperCase();
   const color = COLORS.find((c) => t.includes(` ${c} `) || t.includes(` ${c},`) || t.includes(` ${c}.`));
   const qty = t.match(/\b(\d{1,2})\s*(x|units?|pieces?|pcs|of)\b/)?.[1] ?? t.match(/\b(two|three|four)\b/)?.[1];
   const words: Record<string, number> = { two: 2, three: 3, four: 4 };

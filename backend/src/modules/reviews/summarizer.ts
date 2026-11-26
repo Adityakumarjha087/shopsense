@@ -77,15 +77,16 @@ export function summarizeExtractive(reviews: ReviewInput[]): ReviewSummaryResult
   const label = (key: string) => ASPECTS.find((a) => a.key === key)!.label;
   const minMentions = Math.max(1, Math.round(reviews.length * 0.1));
   const pros = [...stats.entries()]
-    .filter(([, s]) => s.pos >= minMentions && s.pos > s.neg)
+    .filter(([, s]) => s.pos >= minMentions && s.pos > s.neg && s.neg < s.pos * 0.6)
     .sort((a, b) => b[1].pos - a[1].pos)
     .slice(0, 3)
     .map(([k]) => label(k));
   const cons = [...stats.entries()]
     .filter(([, s]) => s.neg >= Math.max(1, Math.floor(minMentions / 2)) && s.neg >= s.pos * 0.25)
     .sort((a, b) => b[1].neg - a[1].neg)
-    .slice(0, 2)
-    .map(([k]) => label(k));
+    .map(([k]) => label(k))
+    .filter((l) => !pros.includes(l))
+    .slice(0, 2);
   const avg = reviews.reduce((s, r) => s + r.rating, 0) / reviews.length;
   const overall = avg >= 4.2 ? "Customers are very positive" : avg >= 3.5 ? "Customers are mostly positive" : avg >= 2.8 ? "Opinions are mixed" : "Customers are largely critical";
   let summary = `${overall} (${avg.toFixed(1)}★ across ${reviews.length} reviews).`;

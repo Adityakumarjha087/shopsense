@@ -60,6 +60,93 @@ services:
       <<: *hc
       test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://localhost:5000/health')"]
 
+  ml-service:
+    build: ./ml
+    image: shopsense-ml:local
+    container_name: shopsense-ml
+    environment:
+      DATABASE_URL: postgresql://shopsense:shopsense@postgres:5432/shopsense
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+      MODEL_DIR: /app/artifacts
+      TRAIN_CRON: ${TRAIN_CRON:-0 2 * * *}
+      EMBEDDER: ${EMBEDDER:-lsa}
+      LOG_LEVEL: INFO
+    ports: ["20602:8000"]
+    volumes: ["shopsense-ml-artifacts:/app/artifacts"]
+    depends_on:
+      postgres: { condition: service_healthy }
+      mlflow: { condition: service_healthy }
+    healthcheck:
+      <<: *hc
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      start_period: 60s
+
+  backend:
+    build: ./backend
+    image: shopsense-backend:local
+    container_name: shopsense-backend
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      DATABASE_URL: postgresql://shopsense:shopsense@postgres:5432/shopsense
+      REDIS_URL: redis://redis:6379
+      MEILI_HOST: http://meilisearch:7700
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:-shopsense-dev-master-key-change-me}
+      ML_SERVICE_URL: http://ml-service:8000
+      ML_TIMEOUT_MS: 3000
+      CORS_ORIGINS: http://localhost:20600
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-compose-local-access-secret-change-me}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-compose-local-refresh-secret-change-me}
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-compose-local-internal-key-change-me}
+      LLM_PROVIDER: ${LLM_PROVIDER:-fake}
+      LLM_MODEL: ${LLM_MODEL:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-whsec_shopsense_mock_secret}
+      FRONTEND_URL: http://frontend:3000
+      FRONTEND_REVALIDATE_SECRET: ${REVALIDATE_SECRET:-compose-local-revalidate-secret}
+      SEED_ON_START: "true"
+    ports: ["20601:4000"]
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      meilisearch: { condition: service_healthy }
+      ml-service: { condition: service_started }
+    healthcheck:
+      <<: *hc
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      start_period: 60s
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:20601
+        NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:-}
+    image: shopsense-frontend:local
+    container_name: shopsense-frontend
+    environment:
+      NODE_ENV: production
+      API_INTERNAL_URL: http://backend:4000
+      NEXT_PUBLIC_API_URL: http://localhost:20601
+      NEXTAUTH_URL: http://localhost:20600
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-compose-local-nextauth-secret-change-me}
+      AUTH_TRUST_HOST: "true"
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-compose-local-internal-key-change-me}
+      REVALIDATE_SECRET: ${REVALIDATE_SECRET:-compose-local-revalidate-secret}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+    ports: ["20600:3000"]
+    depends_on:
+      backend: { condition: service_healthy }
+    healthcheck:
+      <<: *hc
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.status<500?0:1)).catch(()=>process.exit(1))"]
+      start_period: 40s
+
 volumes:
   shopsense-pgdata:
     name: shopsense-pgdata
@@ -67,3 +154,5 @@ volumes:
     name: shopsense-meili
   shopsense-mlflow:
     name: shopsense-mlflow
+  shopsense-ml-artifacts:
+    name: shopsense-ml-artifacts

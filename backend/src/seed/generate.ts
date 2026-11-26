@@ -303,7 +303,7 @@ export function generateInteractions(r: Rng, users: GenUser[], products: GenProd
     const ids: string[] = [];
     for (const ck of kind.complements ?? []) {
       const options = byKind.get(ck);
-      if (options?.length) ids.push(options[hueFor(p.id + ck) % Math.min(3, options.length)]!.id);
+      if (options?.length) ids.push(options[hueFor(p.slug + ck) % Math.min(3, options.length)]!.id);
     }
     partners.set(p.id, ids);
   }

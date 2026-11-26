@@ -28,7 +28,7 @@ export class StripeGateway implements PaymentGateway {
     this.mode = secretKey ? "stripe" : "mock";
     // In mock mode the client is only used for local signature generation/verification (no network).
     // Placeholder key assembled at runtime (never a secret-shaped literal in source).
-    this.stripe = new Stripe(secretKey ?? ["sk", "test", "offline", "placeholder"].join("_"), { maxNetworkRetries: 2 });
+    this.stripe = new Stripe(secretKey || ["sk", "test", "offline", "placeholder"].join("_"), { maxNetworkRetries: 2 });
   }
 
   async createIntent(args: { orderId: string; amount: number; currency: string; customerEmail: string }): Promise<PaymentIntentResult> {

@@ -121,8 +121,8 @@ docker compose up -d --build  # postgres, redis, meilisearch, mlflow, ml-service
 open http://localhost:20600
 ```
 
-First boot runs migrations, seeds the demo dataset (570 products, 401 users, ~24k events,
-~1.3k orders), indexes Meilisearch and trains the first model (logged to MLflow).
+First boot runs migrations, seeds the demo dataset (570 products, 1,913 variants, 7,492 reviews,
+401 users, ~24k events, ~1.3k orders), indexes Meilisearch and trains the first model (logged to MLflow).
 
 | URL | What |
 |---|---|
@@ -207,13 +207,16 @@ See `.env.example` for the full list.
 ## Offline evaluation (seeded dataset)
 
 Temporal hold-out (latest 20 % of each user's items), k = 10, 400 evaluation users,
-23,895 interactions, 570 products:
+24,191 interactions, 1,278 baskets, 570 products (fresh `docker compose up`, model retrained
+from the admin dashboard):
 
 | Strategy | Precision@10 | Recall@10 | NDCG@10 | Hit rate@10 | Catalogue coverage |
 |---|---|---|---|---|---|
-| ALS (32 factors) | 0.113 | 0.209 | 0.185 | 0.640 | 0.87 |
-| Item-kNN | 0.143 | 0.257 | 0.228 | 0.728 | 0.56 |
-| Popularity (cold-start baseline) | 0.022 | 0.040 | 0.030 | 0.198 | 0.03 |
+| ALS (32 factors) | 0.115 | 0.208 | 0.186 | 0.673 | 0.89 |
+| Item-kNN | 0.142 | 0.254 | 0.230 | 0.715 | 0.56 |
+| Popularity (cold-start baseline) | 0.020 | 0.038 | 0.029 | 0.178 | 0.03 |
+
+548 association rules were mined from the order baskets.
 
 The data is simulated from latent user preferences, so these numbers validate the pipeline and
 relative ranking of strategies, not real-world lift. The live A/B test (ALS vs item-kNN) measures CTR.
@@ -256,7 +259,7 @@ Docker images and boots the full stack with a smoke test on every push and pull 
 - **Tool-calling assistant as a protocol**: a deterministic fake LLM that speaks the same
   tool-call protocol as hosted models made the orchestrator, tools and UI fully testable offline;
   swapping in Claude or GPT is an env var.
-- **Evaluate before you A/B**: offline metrics (ALS ≈ 5× popularity on precision@10) justify the
+- **Evaluate before you A/B**: offline metrics (ALS ≈ 5.7× and item-kNN ≈ 7× popularity on precision@10) justify the
   candidates; the online A/B test with server-side attribution decides between them.
 - More trade-offs and scope notes: [`docs/DECISIONS.md`](docs/DECISIONS.md).
 

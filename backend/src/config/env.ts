@@ -51,7 +51,9 @@ const EnvSchema = z.object({
 export type Env = z.infer<typeof EnvSchema>;
 
 function load(): Env {
-  const parsed = EnvSchema.safeParse(process.env);
+  // Treat empty variables (e.g. `STRIPE_SECRET_KEY=` in compose) as unset.
+  const raw = Object.fromEntries(Object.entries(process.env).filter(([, v]) => v !== undefined && v !== ""));
+  const parsed = EnvSchema.safeParse(raw);
   if (!parsed.success) {
     const issues = parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ");
     throw new Error(`Invalid environment configuration: ${issues}`);

@@ -148,11 +148,16 @@ async function main() {
     console.log(`Customer login: ${DEMO_CUSTOMER.email} / ${DEMO_CUSTOMER.password}`);
     const mlUrl = process.env.ML_SERVICE_URL;
     if (mlUrl && !process.argv.includes("--no-train")) {
-      try {
-        const res = await fetch(`${mlUrl.replace(/\/$/, "")}/train`, { method: "POST", signal: AbortSignal.timeout(180_000) });
-        console.log(`ML training triggered: HTTP ${res.status}`);
-      } catch (err) {
-        console.log(`ML service not reachable (${(err as Error).message}); it will train on its own schedule.`);
+      // The ML service may still be booting; retry so the first model sees the full dataset.
+      for (let attempt = 1; attempt <= 12; attempt++) {
+        try {
+          const res = await fetch(`${mlUrl.replace(/\/$/, "")}/train`, { method: "POST", signal: AbortSignal.timeout(180_000) });
+          console.log(`ML training triggered: HTTP ${res.status}`);
+          break;
+        } catch (err) {
+          if (attempt === 12) console.log(`ML service not reachable (${(err as Error).message}); it will train on its own schedule.`);
+          else await new Promise((r) => setTimeout(r, 5_000));
+        }
       }
     }
   } finally {

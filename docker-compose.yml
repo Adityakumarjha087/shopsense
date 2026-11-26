@@ -1,0 +1,69 @@
+name: shopsense
+
+x-healthcheck: &hc
+  interval: 5s
+  timeout: 5s
+  retries: 30
+  start_period: 10s
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: shopsense-postgres
+    environment:
+      POSTGRES_USER: shopsense
+      POSTGRES_PASSWORD: shopsense
+      POSTGRES_DB: shopsense
+    ports: ["20610:5432"]
+    volumes:
+      - shopsense-pgdata:/var/lib/postgresql/data
+      - ./infra/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      <<: *hc
+      test: ["CMD-SHELL", "pg_isready -U shopsense -d shopsense"]
+
+  redis:
+    image: redis:7-alpine
+    container_name: shopsense-redis
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    ports: ["20611:6379"]
+    healthcheck:
+      <<: *hc
+      test: ["CMD", "redis-cli", "ping"]
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.16
+    container_name: shopsense-meilisearch
+    environment:
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:-shopsense-dev-master-key-change-me}
+      MEILI_NO_ANALYTICS: "true"
+      MEILI_ENV: development
+    ports: ["20612:7700"]
+    volumes:
+      - shopsense-meili:/meili_data
+    healthcheck:
+      <<: *hc
+      test: ["CMD-SHELL", "curl -fsS http://localhost:7700/health || wget -qO- http://localhost:7700/health"]
+
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v3.1.1
+    container_name: shopsense-mlflow
+    command: >
+      mlflow server --host 0.0.0.0 --port 5000
+      --backend-store-uri sqlite:////mlflow/mlflow.db
+      --artifacts-destination /mlflow/artifacts
+      --serve-artifacts
+    ports: ["20613:5000"]
+    volumes:
+      - shopsense-mlflow:/mlflow
+    healthcheck:
+      <<: *hc
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://localhost:5000/health')"]
+
+volumes:
+  shopsense-pgdata:
+    name: shopsense-pgdata
+  shopsense-meili:
+    name: shopsense-meili
+  shopsense-mlflow:
+    name: shopsense-mlflow

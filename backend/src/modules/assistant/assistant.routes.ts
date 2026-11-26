@@ -2,7 +2,6 @@ import { Router } from "express";
 import { z } from "zod";
 import { rateLimit } from "express-rate-limit";
 import type { AppContext } from "../../context.js";
-import { env } from "../../config/env.js";
 import { AppError } from "../../lib/errors.js";
 import { defineRoute } from "../../lib/http.js";
 import { LlmError } from "../llm/types.js";
@@ -25,11 +24,10 @@ export function createAssistantRouter(ctx: AppContext): Router {
   const router = Router();
   const service = new AssistantService(ctx.llm, ctx.prisma, ctx.cache, createSearchService(ctx));
   const limiter = rateLimit({
-    windowMs: 60_000,
-    limit: 30,
+    windowMs: ctx.rateLimits.windowMs,
+    limit: ctx.rateLimits.assistantMax,
     standardHeaders: "draft-8",
     legacyHeaders: false,
-    skip: () => env.NODE_ENV === "test",
     message: { error: { code: "RATE_LIMITED", message: "Too many assistant requests, slow down" } },
   });
 

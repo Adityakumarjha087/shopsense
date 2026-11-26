@@ -62,6 +62,12 @@ export async function buildContext(): Promise<AppContext> {
     llm: createLlmProvider(env),
     payments: new StripeGateway(env.STRIPE_SECRET_KEY, env.STRIPE_WEBHOOK_SECRET),
     onCatalogChange,
+    rateLimits: {
+      windowMs: env.RATE_LIMIT_WINDOW_MS,
+      max: env.RATE_LIMIT_MAX,
+      authMax: env.RATE_LIMIT_AUTH_MAX,
+      assistantMax: env.RATE_LIMIT_ASSISTANT_MAX,
+    },
   };
 }
 

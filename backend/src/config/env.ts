@@ -22,6 +22,7 @@ const EnvSchema = z.object({
   RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(60_000),
   RATE_LIMIT_MAX: z.coerce.number().int().positive().default(300),
   RATE_LIMIT_AUTH_MAX: z.coerce.number().int().positive().default(20),
+  RATE_LIMIT_ASSISTANT_MAX: z.coerce.number().int().positive().default(30),
 
   ML_SERVICE_URL: z.string().default("http://localhost:20602"),
   ML_TIMEOUT_MS: z.coerce.number().int().positive().default(1500),
@@ -38,7 +39,7 @@ const EnvSchema = z.object({
   OLLAMA_BASE_URL: z.string().default("http://localhost:11434"),
 
   STRIPE_SECRET_KEY: z.string().optional(),
-  STRIPE_WEBHOOK_SECRET: z.string().default("whsec_shopsense_mock_secret"),
+  STRIPE_WEBHOOK_SECRET: z.string().default("shopsense-mock-webhook-secret"),
 
   FRONTEND_URL: z.string().default("http://localhost:20600"),
   FRONTEND_REVALIDATE_SECRET: z.string().optional(),

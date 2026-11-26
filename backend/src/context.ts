@@ -5,6 +5,13 @@ import type { SearchEngine } from "./modules/search/engine.js";
 import type { LlmProvider } from "./modules/llm/types.js";
 import type { PaymentGateway } from "./modules/payments/gateway.js";
 
+export interface RateLimits {
+  windowMs: number;
+  max: number;
+  authMax: number;
+  assistantMax: number;
+}
+
 /** Explicit dependency container; every router is built from it so tests can swap pieces. */
 export interface AppContext {
   prisma: PrismaClient;
@@ -13,6 +20,8 @@ export interface AppContext {
   search: SearchEngine;
   llm: LlmProvider;
   payments: PaymentGateway;
+  /** Request budgets per window (global / auth endpoints / assistant). */
+  rateLimits: RateLimits;
   /** Fire-and-forget hooks run after catalogue mutations (search reindex, ISR revalidation...). */
   onCatalogChange: (productIds: string[]) => Promise<void>;
 }

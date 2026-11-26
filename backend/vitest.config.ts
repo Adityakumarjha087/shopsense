@@ -15,7 +15,7 @@ export default defineConfig({
       DATABASE_URL: TEST_DB,
       LOG_LEVEL: "silent",
       LLM_PROVIDER: "fake",
-      STRIPE_WEBHOOK_SECRET: "whsec_test_secret",
+      STRIPE_WEBHOOK_SECRET: "test-webhook-signing-secret",
       INTERNAL_API_KEY: "test-internal-key-123456",
       REDIS_URL: "",
       MEILI_HOST: "",

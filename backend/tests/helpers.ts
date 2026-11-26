@@ -85,12 +85,13 @@ export function buildHarness(overrides: Partial<AppContext> = {}): TestHarness {
     ml,
     search: new DbSearchEngine(prisma),
     llm: new FakeLlmProvider() as LlmProvider,
-    payments: new StripeGateway(undefined, "whsec_test_secret"),
+    payments: new StripeGateway(undefined, "test-webhook-signing-secret"),
     onCatalogChange: async (ids) => {
       catalogChanges.push(ids);
       await cache.del("catalog:*");
       await cache.del("search:*");
     },
+    rateLimits: { windowMs: 60_000, max: 100_000, authMax: 100_000, assistantMax: 100_000 },
     ...overrides,
   };
   return { app: createApp(ctx), ctx, ml, catalogChanges };

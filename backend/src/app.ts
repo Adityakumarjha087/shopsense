@@ -73,11 +73,10 @@ export function createApp(ctx: AppContext): Express {
   app.use(
     "/api/",
     rateLimit({
-      windowMs: env.RATE_LIMIT_WINDOW_MS,
-      limit: env.RATE_LIMIT_MAX,
+      windowMs: ctx.rateLimits.windowMs,
+      limit: ctx.rateLimits.max,
       standardHeaders: "draft-8",
       legacyHeaders: false,
-      skip: () => env.NODE_ENV === "test",
       // Authenticated users and the Next.js server (internal key) are keyed separately from anonymous IPs.
       keyGenerator: (req) => req.user?.id ?? (req.headers["x-internal-key"] === env.INTERNAL_API_KEY ? "internal" : ipKeyGenerator(req.ip ?? "0.0.0.0")),
       message: { error: { code: "RATE_LIMITED", message: "Too many requests" } },

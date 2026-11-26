@@ -2,7 +2,6 @@ import { Router } from "express";
 import { z } from "zod";
 import { rateLimit } from "express-rate-limit";
 import type { AppContext } from "../../context.js";
-import { env } from "../../config/env.js";
 import { defineRoute } from "../../lib/http.js";
 import { notFound } from "../../lib/errors.js";
 import { AuthService, toPublicUser } from "./auth.service.js";
@@ -27,11 +26,10 @@ export function createAuthRouter(ctx: AppContext): Router {
   const router = Router();
   const service = new AuthService(ctx.prisma);
   const authLimiter = rateLimit({
-    windowMs: env.RATE_LIMIT_WINDOW_MS,
-    limit: env.RATE_LIMIT_AUTH_MAX,
+    windowMs: ctx.rateLimits.windowMs,
+    limit: ctx.rateLimits.authMax,
     standardHeaders: "draft-8",
     legacyHeaders: false,
-    skip: () => env.NODE_ENV === "test",
     message: { error: { code: "RATE_LIMITED", message: "Too many authentication attempts" } },
   });
 

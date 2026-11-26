@@ -108,8 +108,29 @@ Meilisearch with the same filters → weighted RRF → category-diversity re-ran
 
 ## Screenshots
 
-> _Placeholder — add screenshots of the home page, search results, product page with review
-> summary, assistant widget, checkout and the admin dashboard._
+Captured from the running Docker stack with `node scripts/screenshots.mjs` (synthetic data).
+
+**Recommended for you** — personalised ALS picks for the signed-in demo shopper (A/B variant shown top-right).
+![Recommended for you](docs/screenshots/home.png)
+
+**Product page** — AI review summary with pros/cons, and "Frequently bought together" from association rules.
+![Product page](docs/screenshots/product.png)
+
+**Hybrid search** — "cozy winter outfit under ₹3000" parsed into a price filter and answered by keyword + semantic search.
+![Hybrid search](docs/screenshots/search.png)
+
+**AI shopping assistant** — tool calls to search and compare products, rendered as a comparison table.
+![AI shopping assistant](docs/screenshots/assistant.png)
+
+**Admin dashboard** — sales charts, A/B test CTR with significance, offline model metrics and inventory alerts.
+![Admin dashboard](docs/screenshots/admin.png)
+
+**Dark mode** — the product page in the dark theme.
+![Dark mode](docs/screenshots/product-dark.png)
+
+**Mobile** — the product page at 390×844.
+
+<img src="docs/screenshots/mobile-product.png" alt="Mobile product page" width="320">
 
 ## Local setup
 

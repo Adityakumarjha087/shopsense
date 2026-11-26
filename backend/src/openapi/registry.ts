@@ -3,6 +3,8 @@ import { z } from "zod";
 type Method = "get" | "post" | "put" | "patch" | "delete";
 
 interface RegisteredRoute {
+  /** Router the route was declared on; its mount prefix is resolved at document build time. */
+  owner?: object;
   method: Method;
   path: string;
   summary: string;
@@ -14,9 +16,15 @@ interface RegisteredRoute {
 }
 
 const routes: RegisteredRoute[] = [];
+const prefixes = new WeakMap<object, string>();
 
 export function registerRoute(route: RegisteredRoute): void {
   routes.push(route);
+}
+
+/** Records where a router is mounted (relative to the API base path). */
+export function setRouterPrefix(router: object, prefix: string): void {
+  prefixes.set(router, prefix === "/" ? "" : prefix);
 }
 
 const toJsonSchema = (schema: z.ZodType): Record<string, unknown> => {
@@ -40,7 +48,9 @@ function parametersFrom(schema: z.ZodType | undefined, location: "query" | "path
 export function buildOpenApiDocument(basePath = "/api/v1"): Record<string, unknown> {
   const paths: Record<string, Record<string, unknown>> = {};
   for (const r of routes) {
-    const oaPath = (basePath + r.path).replace(/:([A-Za-z_]+)/g, "{$1}");
+    const prefix = r.owner ? (prefixes.get(r.owner) ?? "") : "";
+    const full = (basePath + prefix + (r.path === "/" && prefix ? "" : r.path)).replace(/\/$/, "") || "/";
+    const oaPath = full.replace(/:([A-Za-z_]+)/g, "{$1}");
     const security =
       r.auth === "user" || r.auth === "admin"
         ? [{ bearerAuth: [] }]

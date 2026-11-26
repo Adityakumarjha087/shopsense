@@ -3,7 +3,7 @@ import { HttpMlClient, MlUnavailableError } from "../../src/modules/recommendati
 
 function fakeFetch(routes: Record<string, unknown>, status = 200) {
   const urls: string[] = [];
-  const fn = (async (input: RequestInfo | URL) => {
+  const fn = (async (input: string | URL | Request) => {
     const url = String(input);
     urls.push(url);
     const key = Object.keys(routes).find((k) => url.includes(k));

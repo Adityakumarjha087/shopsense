@@ -11,7 +11,7 @@ import { logger } from "./lib/logger.js";
 import { optionalAuth } from "./middleware/auth.js";
 import { requestContext } from "./middleware/request-context.js";
 import { errorHandler, notFoundHandler } from "./middleware/error-handler.js";
-import { buildOpenApiDocument } from "./openapi/registry.js";
+import { buildOpenApiDocument, setRouterPrefix } from "./openapi/registry.js";
 import { createAuthRouter } from "./modules/auth/auth.routes.js";
 import { createCatalogRouter } from "./modules/catalog/catalog.routes.js";
 import { createSearchRouter } from "./modules/search/search.routes.js";
@@ -85,17 +85,23 @@ export function createApp(ctx: AppContext): Express {
   );
 
   const v1 = express.Router();
-  v1.use("/auth", createAuthRouter(ctx));
-  v1.use("/", createCatalogRouter(ctx));
-  v1.use("/products", createReviewsRouter(ctx));
-  v1.use("/search", createSearchRouter(ctx));
-  v1.use("/cart", createCartRouter(ctx));
-  v1.use("/wishlist", createWishlistRouter(ctx));
-  v1.use("/", createOrdersRouter(ctx));
-  v1.use("/events", createEventsRouter(ctx));
-  v1.use("/recommendations", createRecommendationsRouter(ctx));
-  v1.use("/assistant", createAssistantRouter(ctx));
-  v1.use("/admin", createAdminRouter(ctx));
+  const mounts: Array<[string, express.Router]> = [
+    ["/auth", createAuthRouter(ctx)],
+    ["/", createCatalogRouter(ctx)],
+    ["/products", createReviewsRouter(ctx)],
+    ["/search", createSearchRouter(ctx)],
+    ["/cart", createCartRouter(ctx)],
+    ["/wishlist", createWishlistRouter(ctx)],
+    ["/", createOrdersRouter(ctx)],
+    ["/events", createEventsRouter(ctx)],
+    ["/recommendations", createRecommendationsRouter(ctx)],
+    ["/assistant", createAssistantRouter(ctx)],
+    ["/admin", createAdminRouter(ctx)],
+  ];
+  for (const [prefix, router] of mounts) {
+    setRouterPrefix(router, prefix);
+    v1.use(prefix, router);
+  }
   app.use("/api/v1", v1);
 
   const openapi = buildOpenApiDocument();

@@ -40,7 +40,7 @@ export function defineRoute<
   handler: (input: Input<Infer<B>, Infer<Q>, Infer<P>>, req: Request, res: Response) => Promise<unknown> | unknown,
 ): void {
   const auth = spec.auth ?? "none";
-  registerRoute({ ...spec, auth, body: spec.body, query: spec.query, params: spec.params });
+  registerRoute({ ...spec, owner: router, auth, body: spec.body, query: spec.query, params: spec.params });
 
   const guards = [];
   if (auth === "user") guards.push(requireAuth);

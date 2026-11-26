@@ -18,7 +18,7 @@ const convo: ChatMessage[] = [
 
 function mockFetch(handler: (url: string, body: Record<string, unknown>, init: RequestInit) => { status?: number; body: unknown }) {
   const calls: Array<{ url: string; body: Record<string, unknown>; headers: Headers }> = [];
-  const fn = (async (input: RequestInfo | URL, init?: RequestInit) => {
+  const fn = (async (input: string | URL | Request, init?: RequestInit) => {
     const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
     const body = init?.body ? (JSON.parse(String(init.body)) as Record<string, unknown>) : {};
     calls.push({ url, body, headers: new Headers(init?.headers) });

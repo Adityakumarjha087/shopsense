@@ -226,9 +226,11 @@ describe("search & pagination edge cases", () => {
 const meiliHost = process.env.TEST_MEILI_HOST;
 describe.skipIf(!meiliHost)("Meilisearch typo tolerance (integration)", () => {
   const indexName = `products_test_${randomUUID().slice(0, 8)}`;
-  const engine = new MeiliSearchEngine(meiliHost ?? "", process.env.TEST_MEILI_KEY, indexName);
+  // Constructed lazily: describe bodies still run when skipped, and the client rejects "".
+  let engine: MeiliSearchEngine;
 
   beforeAll(async () => {
+    engine = new MeiliSearchEngine(meiliHost as string, process.env.TEST_MEILI_KEY, indexName);
     await ensureSeeded();
     await engine.ensureIndex();
     await engine.upsert(await buildSearchDocuments(prisma));

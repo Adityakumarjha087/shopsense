@@ -10,7 +10,10 @@ test("admin route requires sign-in and shows analytics, A/B test and model metri
   await expect(page.getByTestId("kpi-Revenue")).toHaveText(/₹/);
   await expect(page.getByText(/A\/B test:/)).toBeVisible();
   await expect(page.getByTestId("ctr-A")).toBeVisible();
-  await expect(page.getByRole("cell", { name: /0\.\d{3}/ }).first()).toBeVisible();
+  // Model metrics come from the ML service; hosted demos without it show a clear "disabled" notice instead.
+  const metricsCell = page.getByRole("cell", { name: /0\.\d{3}/ }).first();
+  const mlDisabled = page.getByRole("alert").filter({ hasText: "ML service disabled" });
+  await expect(metricsCell.or(mlDisabled)).toBeVisible();
   await expect(page.getByText("Revenue by day")).toBeVisible();
 
   await page.getByRole("link", { name: "Orders" }).first().click();

@@ -9,6 +9,18 @@ Stripe-webhook state machine as live Stripe.
 > All products, brands, reviews and users are **synthetic** (generated from templates in
 > `backend/src/seed/`). Brand names are invented.
 
+## Live demo
+
+| | |
+|---|---|
+| **App** | [shopsense-blue.vercel.app](https://shopsense-blue.vercel.app) |
+| **API docs** | [shopsense-api-jqwh.onrender.com/api/docs/](https://shopsense-api-jqwh.onrender.com/api/docs/) |
+| **Health** | [shopsense-api-jqwh.onrender.com/health](https://shopsense-api-jqwh.onrender.com/health) |
+| **Demo login** | `demo@shopsense.dev` / `Demo@12345` (admin: `admin@shopsense.dev` / `Admin@12345`) |
+
+> Hosted on free tiers (Vercel + Render + Neon Postgres). The backend sleeps after 15 minutes idle, so the
+> first request can take about a minute — open the health link first. Demo limits: ML service, Meilisearch and MLflow not deployed — search runs on Postgres and recommendations use SQL fallbacks.
+
 ## Features
 
 - **Catalogue**: 570 seeded products across 10 categories, size/colour variants with per-variant

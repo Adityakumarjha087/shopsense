@@ -147,7 +147,8 @@ async function main() {
     console.log(`Admin login: ${DEMO_ADMIN.email} / ${DEMO_ADMIN.password}`);
     console.log(`Customer login: ${DEMO_CUSTOMER.email} / ${DEMO_CUSTOMER.password}`);
     const mlUrl = process.env.ML_SERVICE_URL;
-    if (mlUrl && !process.argv.includes("--no-train")) {
+    // Skip when the ML service is disabled (ML_SERVICE_URL=disabled/none/off).
+    if (mlUrl && /^https?:\/\//i.test(mlUrl) && !process.argv.includes("--no-train")) {
       // The ML service may still be booting; retry so the first model sees the full dataset.
       for (let attempt = 1; attempt <= 12; attempt++) {
         try {

@@ -138,3 +138,50 @@ export class HttpMlClient implements MlClient {
     }
   }
 }
+
+/**
+ * Used when no ML service is deployed (e.g. free-tier hosting). Every call fails fast with
+ * MlUnavailableError so callers take their SQL fallbacks (popularity, category neighbours,
+ * co-purchase counts, keyword-only search) without waiting on a network timeout.
+ */
+export class DisabledMlClient implements MlClient {
+  private fail(): never {
+    throw new MlUnavailableError("ML service disabled");
+  }
+
+  async recommendForUser(): Promise<UserRecResult> {
+    return this.fail();
+  }
+  async similar(): Promise<ScoredItem[]> {
+    return this.fail();
+  }
+  async boughtTogether(): Promise<{ items: BoughtTogetherItem[]; source: string }> {
+    return this.fail();
+  }
+  async popular(): Promise<ScoredItem[]> {
+    return this.fail();
+  }
+  async semanticSearch(): Promise<ScoredItem[]> {
+    return this.fail();
+  }
+  async modelInfo(): Promise<unknown> {
+    return this.fail();
+  }
+  async train(): Promise<unknown> {
+    return this.fail();
+  }
+  async refreshIndex(): Promise<void> {
+    return this.fail();
+  }
+  async health(): Promise<boolean> {
+    return false;
+  }
+}
+
+const DISABLED_VALUES = new Set(["disabled", "none", "off", "false"]);
+
+/** `ML_SERVICE_URL=disabled` (or none/off/false) turns the ML service off; any other value is an HTTP base URL. */
+export function createMlClient(baseUrl: string, timeoutMs: number): MlClient {
+  if (DISABLED_VALUES.has(baseUrl.trim().toLowerCase())) return new DisabledMlClient();
+  return new HttpMlClient(baseUrl, timeoutMs);
+}

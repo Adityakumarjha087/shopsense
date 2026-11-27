@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { HttpMlClient, MlUnavailableError } from "../../src/modules/recommendations/ml-client.js";
+import { createMlClient, DisabledMlClient, HttpMlClient, MlUnavailableError } from "../../src/modules/recommendations/ml-client.js";
 
 function fakeFetch(routes: Record<string, unknown>, status = 200) {
   const urls: string[] = [];
@@ -53,5 +53,28 @@ describe("HttpMlClient", () => {
     const ml = new HttpMlClient("http://ml", 500, broken);
     await expect(ml.popular(1)).rejects.toBeInstanceOf(MlUnavailableError);
     expect(await ml.health()).toBe(false);
+  });
+});
+
+describe("createMlClient", () => {
+  it("returns a disabled client for sentinel values", () => {
+    for (const v of ["disabled", "none", "OFF", " false "]) expect(createMlClient(v, 100)).toBeInstanceOf(DisabledMlClient);
+  });
+
+  it("returns an HTTP client for URLs", () => {
+    expect(createMlClient("http://ml:8000", 100)).toBeInstanceOf(HttpMlClient);
+  });
+
+  it("disabled client fails fast so callers use their fallbacks", async () => {
+    const ml = new DisabledMlClient();
+    expect(await ml.health()).toBe(false);
+    await expect(ml.recommendForUser()).rejects.toBeInstanceOf(MlUnavailableError);
+    await expect(ml.similar()).rejects.toBeInstanceOf(MlUnavailableError);
+    await expect(ml.boughtTogether()).rejects.toBeInstanceOf(MlUnavailableError);
+    await expect(ml.popular()).rejects.toBeInstanceOf(MlUnavailableError);
+    await expect(ml.semanticSearch()).rejects.toBeInstanceOf(MlUnavailableError);
+    await expect(ml.modelInfo()).rejects.toBeInstanceOf(MlUnavailableError);
+    await expect(ml.train()).rejects.toBeInstanceOf(MlUnavailableError);
+    await expect(ml.refreshIndex()).rejects.toBeInstanceOf(MlUnavailableError);
   });
 });

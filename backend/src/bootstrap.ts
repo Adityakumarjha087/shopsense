@@ -5,7 +5,7 @@ import { logger } from "./lib/logger.js";
 import { prisma } from "./lib/prisma.js";
 import { createLlmProvider } from "./modules/llm/factory.js";
 import { StripeGateway } from "./modules/payments/gateway.js";
-import { HttpMlClient } from "./modules/recommendations/ml-client.js";
+import { createMlClient } from "./modules/recommendations/ml-client.js";
 import { DbSearchEngine } from "./modules/search/db-engine.js";
 import { MeiliSearchEngine } from "./modules/search/meili-engine.js";
 import { buildSearchDocuments } from "./modules/search/documents.js";
@@ -14,7 +14,7 @@ import type { SearchEngine } from "./modules/search/engine.js";
 /** Wires production dependencies from the environment. */
 export async function buildContext(): Promise<AppContext> {
   const cache = createCache(env.REDIS_URL);
-  const ml = new HttpMlClient(env.ML_SERVICE_URL, env.ML_TIMEOUT_MS);
+  const ml = createMlClient(env.ML_SERVICE_URL, env.ML_TIMEOUT_MS);
   let search: SearchEngine = new DbSearchEngine(prisma);
   if (env.MEILI_HOST) {
     const meili = new MeiliSearchEngine(env.MEILI_HOST, env.MEILI_MASTER_KEY, env.MEILI_INDEX);
